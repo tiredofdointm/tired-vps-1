@@ -1,0 +1,18 @@
+services:
+  tired-events:
+    build: .
+    image: tired-events:latest
+    ports:
+      - "8787:8787"
+    volumes:
+      - tired-data:/data
+      # Mount the folders where your photos already live (read-only is fine),
+      # then point the indexer at them:
+      # - /srv/photos:/photos:ro
+    environment:
+      PORT: "8787"
+      # TIRED_IMAGES_DIRS: /photos/imports,/photos/brand
+    restart: unless-stopped
+
+volumes:
+  tired-data:

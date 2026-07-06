@@ -79,6 +79,31 @@ e2e/           Playwright suite (layout overflow checks across viewports + flows
 data/          runtime state (gitignored): db.json, media index/meta, thumbs cache
 ```
 
+## Deploying
+
+**One command on a fresh Debian/Ubuntu VPS** (installs Node 22, clones, builds,
+sets up a hardened systemd service):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/tiredofdointm/tired-vps-1/main/deploy/deploy.sh | sudo bash
+```
+
+Re-running the same command updates to the latest `main`. Point the photo
+indexer at your real folders by uncommenting `TIRED_IMAGES_DIRS` in
+`/etc/systemd/system/tired-events.service`. For HTTPS put `deploy/Caddyfile`
+behind [Caddy](https://caddyserver.com) — automatic certificates included.
+
+**Docker** (state lives in the `tired-data` volume):
+
+```bash
+docker compose up -d --build
+```
+
+**Auto-deploy from GitHub**: `.github/workflows/deploy.yml` runs typecheck,
+build and the full Playwright suite on every push, then — if you add the
+`VPS_HOST`, `VPS_SSH_KEY` (and optionally `VPS_USER`) repository secrets —
+ships `main` to your VPS automatically.
+
 ## Config
 
 | Env | Default | Meaning |

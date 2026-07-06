@@ -1,0 +1,7 @@
+# Reverse proxy with automatic HTTPS (https://caddyserver.com).
+# Replace with your real domain, put this at /etc/caddy/Caddyfile,
+# then: systemctl reload caddy
+tired.events {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8787
+}

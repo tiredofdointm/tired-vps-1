@@ -1,0 +1,24 @@
+[Unit]
+Description=TIRED.EVENTS server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tired
+WorkingDirectory=/opt/tired-events
+Environment=NODE_ENV=production
+Environment=PORT=8787
+Environment=TIRED_DATA_DIR=/var/lib/tired-events
+# Point the indexer at the folders where your photos already live
+# (comma separated; they are only ever read):
+# Environment=TIRED_IMAGES_DIRS=/srv/photos/imports,/srv/photos/brand
+ExecStart=/usr/bin/node server/index.js
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+ProtectSystem=full
+ReadWritePaths=/var/lib/tired-events
+
+[Install]
+WantedBy=multi-user.target
