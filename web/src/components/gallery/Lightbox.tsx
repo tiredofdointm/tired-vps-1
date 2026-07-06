@@ -4,7 +4,7 @@ import type { Photo } from '../../lib/types';
 import { fileUrl, thumbUrl } from '../../lib/api';
 import { bytes, dateShort } from '../../lib/format';
 import {
-  IcChevronRight, IcDownload, IcEdit, IcHeart, IcPin, IcX,
+  IcChevronRight, IcDownload, IcEdit, IcHeart, IcPause, IcPin, IcPlay, IcX,
 } from '../../lib/icons';
 
 export function Lightbox({
@@ -16,6 +16,7 @@ export function Lightbox({
   onTogglePin,
   onToggleFavorite,
   canEdit,
+  autoPlay,
 }: {
   photos: Photo[];
   index: number;
@@ -25,10 +26,13 @@ export function Lightbox({
   onTogglePin?: (photo: Photo) => void;
   onToggleFavorite?: (photo: Photo) => void;
   canEdit?: boolean;
+  autoPlay?: boolean;
 }) {
   const photo = photos[index];
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
+  const [playing, setPlaying] = useState(!!autoPlay);
+  const [zoom, setZoom] = useState<{ x: number; y: number } | null>(null);
   const stripRef = useRef<HTMLDivElement | null>(null);
 
   const go = useCallback(
@@ -39,6 +43,16 @@ export function Lightbox({
     },
     [index, photos.length, onIndex],
   );
+
+  // slideshow — auto-advance until paused or closed
+  useEffect(() => {
+    if (!playing || photos.length < 2) return;
+    const t = setInterval(() => go(1), 3600);
+    return () => clearInterval(t);
+  }, [playing, go, photos.length]);
+
+  // zoom resets when the frame changes
+  useEffect(() => setZoom(null), [index]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -83,6 +97,11 @@ export function Lightbox({
       <div className="lb-top">
         <span className="lb-count mono">{index + 1} / {photos.length}</span>
         <div style={{ flex: 1 }} />
+        {photos.length > 1 && (
+          <button className="icon-btn" onClick={() => setPlaying((p) => !p)} title={playing ? 'Pause slideshow' : 'Play slideshow'} style={playing ? { color: 'var(--accent)' } : undefined}>
+            {playing ? <IcPause size={17} /> : <IcPlay size={17} />}
+          </button>
+        )}
         {canEdit && onTogglePin && (
           <button className={`icon-btn${photo.pinned ? ' on' : ''}`} style={photo.pinned ? { color: 'var(--warn)' } : undefined} onClick={() => onTogglePin(photo)} title={photo.pinned ? 'Unpin' : 'Pin'}>
             <IcPin size={18} />
@@ -105,7 +124,26 @@ export function Lightbox({
         <button className="lb-nav prev" onClick={() => go(-1)} aria-label="Previous">
           <IcChevronRight size={20} style={{ transform: 'rotate(180deg)' }} />
         </button>
-        <img key={photo.id} src={thumbUrl(photo.id, 1600)} alt={photo.name} draggable={false} />
+        <img
+          key={photo.id}
+          src={thumbUrl(photo.id, 1600)}
+          alt={photo.name}
+          draggable={false}
+          onClick={(e) => {
+            if (zoom) {
+              setZoom(null);
+            } else {
+              const r = e.currentTarget.getBoundingClientRect();
+              setZoom({ x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 });
+            }
+          }}
+          style={{
+            cursor: zoom ? 'zoom-out' : 'zoom-in',
+            transform: zoom ? 'scale(2.3)' : undefined,
+            transformOrigin: zoom ? `${zoom.x}% ${zoom.y}%` : undefined,
+            transition: 'transform 0.35s var(--ease-out)',
+          }}
+        />
         <button className="lb-nav next" onClick={() => go(1)} aria-label="Next">
           <IcChevronRight size={20} />
         </button>

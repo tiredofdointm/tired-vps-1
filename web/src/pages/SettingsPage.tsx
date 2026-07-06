@@ -84,7 +84,7 @@ export function SettingsPage() {
                 <div className="faint" style={{ fontSize: 12, marginTop: 8 }}>Any photo from your imported folders works.</div>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="form-2col">
               <div className="field">
                 <label>Display name</label>
                 <input className="input" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
@@ -93,7 +93,7 @@ export function SettingsPage() {
                 <label>Handle</label>
                 <input className="input" value={form.handle} onChange={(e) => setForm((f) => ({ ...f, handle: e.target.value }))} />
               </div>
-              <div className="field" style={{ gridColumn: '1/-1' }}>
+              <div className="field span-2">
                 <label>Bio</label>
                 <textarea className="input" value={form.bio} onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))} maxLength={300} />
               </div>

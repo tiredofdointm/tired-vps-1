@@ -72,7 +72,12 @@ export function VirtualGrid({
   emptyNode?: React.ReactNode;
 }) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [wrapEl, setWrapEl] = useState<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(0);
+  const attachWrap = useCallback((el: HTMLDivElement | null) => {
+    wrapRef.current = el;
+    setWrapEl(el);
+  }, []);
   const [range, setRange] = useState<[number, number]>([0, 40]);
   const [marquee, setMarquee] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const dragRef = useRef<{ startX: number; startY: number; additive: boolean; moved: boolean; pointerId: number; fromCell: boolean } | null>(null);
@@ -86,14 +91,14 @@ export function VirtualGrid({
   const layoutRef = useRef(layout);
   layoutRef.current = layout;
 
+  // ref-callback attachment: survives the wrap element mounting late or remounting
   useLayoutEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => setWidth(el.clientWidth));
-    ro.observe(el);
-    setWidth(el.clientWidth);
+    if (!wrapEl) return;
+    const ro = new ResizeObserver(() => setWidth(wrapEl.clientWidth));
+    ro.observe(wrapEl);
+    setWidth(wrapEl.clientWidth);
     return () => ro.disconnect();
-  }, []);
+  }, [wrapEl]);
 
   // ---- windowing: compute visible row range from window scroll ----
   const updateRange = useCallback(() => {
@@ -267,11 +272,9 @@ export function VirtualGrid({
     return m;
   }, [photos]);
 
-  if (!photos.length && emptyNode) return <>{emptyNode}</>;
-
   return (
     <div
-      ref={wrapRef}
+      ref={attachWrap}
       className={`vgrid-wrap${selection && selection.count > 0 ? ' selecting' : ''}`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -282,6 +285,7 @@ export function VirtualGrid({
       role="grid"
       aria-label="Photo grid"
     >
+      {!photos.length && emptyNode}
       <div className="vgrid" style={{ height: layout.totalH }}>
         {visible.map((r) => {
           const photo = photoAt.get(r.id);

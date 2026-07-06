@@ -3,11 +3,11 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useApp } from '../lib/store';
 import { useOutsideClose } from '../lib/hooks';
 import { ago, money } from '../lib/format';
-import { thumbUrl } from '../lib/api';
+import { api, thumbUrl } from '../lib/api';
 import { Avatar } from './ui';
 import {
   IcBell, IcCart, IcChevronDown, IcChevronRight, IcFeed, IcImages, IcMenu, IcReceipt,
-  IcSettings, IcSignOut, IcSparkles, IcTicket, IcTrash, IcUser, IcX,
+  IcSearch, IcSettings, IcSignOut, IcSparkles, IcTicket, IcTrash, IcUser, IcX,
 } from '../lib/icons';
 
 const NAV = [
@@ -53,6 +53,14 @@ export function Header() {
           ))}
         </nav>
         <div className="header-actions">
+          <button
+            className="icon-btn"
+            aria-label="Search everything (Ctrl+K)"
+            title="Search everything — Ctrl+K"
+            onClick={() => window.dispatchEvent(new Event('tired:palette'))}
+          >
+            <IcSearch size={18} />
+          </button>
           <CartButton count={cartCount} />
           {user ? (
             <ProfileButton />
@@ -146,7 +154,7 @@ function CartButton({ count }: { count: number }) {
 
 /* ------------ profile dropdown: everything past the cart lives here ------------ */
 function ProfileButton() {
-  const { user, unread, signOut, notifications, markAllRead } = useApp();
+  const { user, unread, signOut, notifications, markAllRead, refreshNotifications } = useApp();
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<'menu' | 'notifications'>('menu');
   const close = useCallback(() => { setOpen(false); setView('menu'); }, []);
@@ -232,7 +240,13 @@ function ProfileButton() {
                   <div
                     key={n.id}
                     className={`notif${n.readAt ? '' : ' unread'}`}
-                    onClick={() => { close(); if (n.href) navigate(n.href); }}
+                    onClick={() => {
+                      close();
+                      if (!n.readAt) {
+                        api.post(`/api/notifications/${n.id}/read`).then(refreshNotifications).catch(() => undefined);
+                      }
+                      if (n.href) navigate(n.href);
+                    }}
                   >
                     <div className="ic"><IcSparkles size={17} /></div>
                     <div style={{ minWidth: 0 }}>

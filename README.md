@@ -63,6 +63,12 @@ the crash-proofing for big galleries. Selection works like a desktop:
 | Arrows / Shift+arrows | move focus / extend |
 | Enter / double-click | open lightbox |
 
+Plus: **Ctrl/Cmd+K** opens a command palette from anywhere (events, galleries,
+pages, actions); the library sidebar has Favorites / Pinned / Hidden smart
+views (hide is always reversible from the Hidden view) and sort by name,
+newest or size; the lightbox does click-to-zoom and slideshow, and every
+gallery has a one-click Slideshow button.
+
 ## Layout
 
 ```

@@ -43,6 +43,67 @@ test.describe('layout fits at every size', () => {
   }
 });
 
+const SIGNED_PAGES = ['/dashboard', '/tickets', '/orders', '/settings', '/feed', '/covers', '/events/neon-garden', '/galleries/gal_echo'];
+test.describe('signed-in layout fits at every size', () => {
+  for (const vp of [VIEWPORTS[0], VIEWPORTS[3]]) {
+    for (const path of SIGNED_PAGES) {
+      test(`no overflow ${vp.name} ${path}`, async ({ page }) => {
+        await signIn(page);
+        await page.setViewportSize({ width: vp.width, height: vp.height });
+        await page.goto(path);
+        await page.waitForLoadState('networkidle');
+        await noHorizontalOverflow(page, `${vp.name} ${path}`);
+      });
+    }
+  }
+});
+
+test('command palette jumps anywhere', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForSelector('.event-card'); // app hydrated
+  await page.keyboard.press('ControlOrMeta+k');
+  await expect(page.locator('[aria-label="Search commands"]')).toBeVisible();
+  await expect(page.locator('.cp-item').first()).toBeVisible(); // commands loaded
+  await page.fill('[aria-label="Search commands"]', 'neon garden');
+  await expect(page.locator('.cp-item').first()).toContainText('Neon Garden');
+  await page.keyboard.press('Enter');
+  await page.waitForURL('**/events/neon-garden');
+});
+
+test('hide and unhide photos via smart view', async ({ page }) => {
+  await signIn(page);
+  await page.goto('/galleries');
+  await page.waitForSelector('.vcell');
+  await page.waitForLoadState('networkidle');
+  const firstName = await page.locator('.vcell').first().getAttribute('title');
+  await page.locator('.vcell').first().click();
+  await page.click('.selbar .sb-btn:has-text("Hide")');
+  await expect(page.locator('.selbar')).toHaveCount(0);
+  // hidden view shows it, unhide brings it back
+  await page.click('.folder-item:has-text("Hidden")');
+  await page.waitForSelector('.vcell');
+  await expect(page.locator(`.vcell[title="${firstName}"]`)).toBeVisible();
+  await page.locator(`.vcell[title="${firstName}"]`).click();
+  await page.click('.selbar .sb-btn:has-text("Unhide")');
+  await page.click('.folder-item:has-text("Everything")');
+  await page.waitForSelector('.vcell');
+  await expect(page.locator(`.vcell[title="${firstName}"]`)).toBeVisible();
+});
+
+test('lightbox slideshow advances frames', async ({ page }) => {
+  await signIn(page);
+  await page.goto('/galleries');
+  await page.waitForSelector('.vcell');
+  await page.waitForLoadState('networkidle');
+  await page.locator('.vcell').nth(1).dblclick();
+  await page.waitForSelector('.lightbox');
+  const before = await page.locator('.lb-count').textContent();
+  await page.click('[title="Play slideshow"]');
+  await page.waitForTimeout(4300);
+  const after = await page.locator('.lb-count').textContent();
+  expect(after).not.toBe(before);
+});
+
 test('header consolidates account items into profile menu', async ({ page }) => {
   await signIn(page);
   // items should NOT be loose header links

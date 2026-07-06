@@ -13,6 +13,7 @@ import { CoverCycler } from '../components/CoverCycler';
 import { EventCard } from '../components/EventCard';
 import { Avatar, Empty, Modal, ModalHead, SkeletonBlock } from '../components/ui';
 import { TicketQR } from '../components/QR';
+import { CoverManager } from '../components/gallery/CoverManager';
 
 type Mode = 'client' | 'host';
 
@@ -298,6 +299,7 @@ function HostEventRow({ event, onChanged }: { event: EventItem; onChanged: () =>
   const { toast } = useApp();
   const pct = event.capacity ? Math.min(100, Math.round((event.ticketsSold / event.capacity) * 100)) : 0;
   const [busy, setBusy] = useState(false);
+  const [coversOpen, setCoversOpen] = useState(false);
   const toggleVenue = async () => {
     setBusy(true);
     try {
@@ -328,13 +330,39 @@ function HostEventRow({ event, onChanged }: { event: EventItem; onChanged: () =>
         <button className="btn sm" onClick={toggleVenue} disabled={busy} title="Secret drops keep the address hidden until you announce it">
           {event.venue.announced ? <><IcMapPin size={13} /> Announced</> : <><IcLock size={13} /> Secret</>}
         </button>
+        <button className="btn ghost sm" onClick={() => setCoversOpen(true)} title="Choose the photos cycling on this event's card and hero">
+          <IcImages size={13} /> Covers
+        </button>
         {event.galleryId && (
           <Link to={`/galleries/${event.galleryId}`} className="btn ghost sm">
             <IcImages size={13} /> Gallery
           </Link>
         )}
       </div>
+      <Modal open={coversOpen} onClose={() => setCoversOpen(false)} wide>
+        <ModalHead title={`Covers — ${event.title}`} sub="These photos cycle on the event card and hero. Drag to reorder." onClose={() => setCoversOpen(false)} />
+        <EventCoverEditor event={event} onChanged={onChanged} />
+      </Modal>
     </div>
+  );
+}
+
+function EventCoverEditor({ event, onChanged }: { event: EventItem; onChanged: () => void }) {
+  const { toast } = useApp();
+  const [ids, setIds] = useState(event.coverIds);
+  return (
+    <CoverManager
+      ids={ids}
+      onChange={async (next) => {
+        setIds(next);
+        try {
+          await api.patch(`/api/host/events/${event.id}`, { coverIds: next });
+          onChanged();
+        } catch {
+          toast('Could not save covers', 'err');
+        }
+      }}
+    />
   );
 }
 
@@ -369,12 +397,12 @@ function CreateEventModal({ open, onClose, onCreated }: { open: boolean; onClose
   return (
     <Modal open={open} onClose={onClose}>
       <ModalHead title="New event" sub="Publish a night — you can refine details after." onClose={onClose} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 13 }}>
-        <div className="field" style={{ gridColumn: '1/-1' }}>
+      <div className="form-2col" style={{ gap: 13 }}>
+        <div className="field span-2">
           <label>Title</label>
           <input className="input" value={f.title} onChange={(e) => set('title', e.target.value)} placeholder="Warehouse Frequencies vol. 2" />
         </div>
-        <div className="field" style={{ gridColumn: '1/-1' }}>
+        <div className="field span-2">
           <label>Tagline</label>
           <input className="input" value={f.tagline} onChange={(e) => set('tagline', e.target.value)} placeholder="One line that sells the night" />
         </div>

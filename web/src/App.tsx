@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Link, Route, Routes, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './lib/store';
 import { Header } from './components/Header';
+import { CommandPalette } from './components/CommandPalette';
 import { Toasts } from './components/ui';
 import { EventsPage } from './pages/EventsPage';
 import { EventDetailPage } from './pages/EventDetailPage';
@@ -56,6 +57,7 @@ function Shell() {
         </Routes>
       </div>
       {!bare && <Footer />}
+      <CommandPalette />
       <Toasts />
     </>
   );

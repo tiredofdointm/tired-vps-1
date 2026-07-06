@@ -5,7 +5,7 @@ import type { Gallery, Photo } from '../lib/types';
 import { useApp } from '../lib/store';
 import { plural } from '../lib/format';
 import {
-  IcChevronRight, IcDownload, IcEdit, IcImages, IcLayers, IcPin, IcShare, IcTrash, IcX,
+  IcChevronRight, IcDownload, IcEdit, IcImages, IcLayers, IcPin, IcPlay, IcShare, IcTrash, IcX,
 } from '../lib/icons';
 import { CoverCycler } from '../components/CoverCycler';
 import { Empty, Modal, ModalHead, SkeletonBlock } from '../components/ui';
@@ -23,6 +23,7 @@ export function GalleryDetailPage() {
   const [gallery, setGallery] = useState<Gallery | null>(null);
   const [photos, setPhotos] = useState<Photo[] | null>(null);
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [slideshow, setSlideshow] = useState(false);
   const [share, setShare] = useState<{ url: string; name: string } | null>(null);
   const [coversOpen, setCoversOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -164,7 +165,10 @@ export function GalleryDetailPage() {
           <h1 style={{ fontSize: 'clamp(28px, 4.4vw, 46px)' }}>{gallery.name}</h1>
           {gallery.description && <p className="lead">{gallery.description}</p>}
           <div className="hero-cta">
-            <button className="btn primary" onClick={() => shareSelection(true)}>
+            <button className="btn primary" onClick={() => { setSlideshow(true); setLightbox(0); }} disabled={!photos.length}>
+              <IcPlay size={15} /> Slideshow
+            </button>
+            <button className="btn" onClick={() => shareSelection(true)}>
               <IcShare size={15} /> Share gallery
             </button>
             <button className="btn" onClick={() => exportZip(true)}>
@@ -214,12 +218,13 @@ export function GalleryDetailPage() {
         <Lightbox
           photos={photos}
           index={lightbox}
-          onClose={() => setLightbox(null)}
+          onClose={() => { setLightbox(null); setSlideshow(false); }}
           onIndex={setLightbox}
           canEdit={isOwner}
           onRename={rename}
           onTogglePin={togglePin}
           onToggleFavorite={toggleFav}
+          autoPlay={slideshow}
         />
       )}
 
